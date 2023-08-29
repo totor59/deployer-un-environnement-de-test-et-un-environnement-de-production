@@ -1,11 +1,13 @@
 variable "subscription_id" {
   description = "Azure Subscription ID"
   type        = string
+  default     = "ec907711-acd7-4191-9983-9577afbe3ce1"
 }
 
 variable "tenant_id" {
   description = "Azure Tenant ID"
   type        = string
+  default     = "a2e466aa-4f86-4545-b5b8-97da7c8febf3"
 }
 
 variable "prefix" {
@@ -23,5 +25,5 @@ variable "suffix" {
 variable "location" {
   description = "Localisation des ressources."
   type        = string
-  default     = "northeurope"
+  default     = "North Europe"
 }

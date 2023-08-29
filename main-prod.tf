@@ -2,8 +2,8 @@
 
 resource "azurerm_aks_cluster" "aks_cluster" {
   name                = "my-aks-cluster"
-  location            = "North Europe"
-  resource_group_name = "opsia-rg-001"
+  location            = "default"
+  resource_group_name = "default"
   dns_prefix          = "myaks"
   
   default_node_pool {

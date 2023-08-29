@@ -1,3 +1,3 @@
 [submodule "Emotions_Tracking_App_NLP"]
 	path = Emotions_Tracking_App_NLP
-	url = https://github.com/charles-42/Emotions_Tracking_App_NLP.git
+	url = git@github.com:totor59/Emotions_Tracking_App_NLP.git

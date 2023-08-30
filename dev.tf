@@ -1,4 +1,4 @@
-resource "azurerm_container_group" "db" {
+resource "azurerm_container_group" "dev" {
   name                = "opsia-dev"
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
@@ -11,14 +11,10 @@ resource "azurerm_container_group" "db" {
     server   = "opsia.azurecr.io"
   }
   container {
-    name   = "postgres-dev"
+    name   = "db"
     image  = "opsia.azurecr.io/postgres:v1"
     cpu    = "0.5"
     memory = "1.5"
-    # ports {
-    #   port     = 8080
-    #   protocol = "TCP"
-    # }
     volume {
       name       = "postgres-data"
       mount_path = "/var/lib/postgresql/data"
@@ -28,6 +24,24 @@ resource "azurerm_container_group" "db" {
       POSTGRES_DB       = "emotion_db"
       POSTGRES_USER     = "main_user"
       POSTGRES_PASSWORD = "pwd"
+      POSTGRES_NAME     = "emotion_db"
+    }
+  }
+  container {
+    name   = "adminer-dev"
+    image  = "opsia.azurecr.io/adminer:v1"
+    cpu    = "0.5"
+    memory = "1.5"
+    ports {
+      port     = 8080
+      protocol = "TCP"
+    }
+    environment_variables = {
+      POSTGRES_DB       = "emotion_db"
+      POSTGRES_USER     = "main_user"
+      POSTGRES_PASSWORD = "pwd"
+      POSTGRES_NAME     = "emotion_db"
+      DB_HOST           = "db"
     }
   }
 
@@ -45,20 +59,15 @@ resource "azurerm_container_group" "db" {
       mount_path = "/usr/share/elasticsearch/data/nodes"
       empty_dir  = true
     }
-  }
-
-  container {
-    name   = "adminer-dev"
-    image  = "opsia.azurecr.io/adminer:v1"
-    cpu    = "0.5"
-    memory = "1.5"
-    ports {
-      port     = 81
-      protocol = "TCP"
+    environment_variables = {
+      POSTGRES_DB       = "emotion_db"
+      POSTGRES_USER     = "main_user"
+      POSTGRES_PASSWORD = "pwd"
+      POSTGRES_NAME     = "emotion_db"
+      DB_HOST           = "db"
     }
   }
-
-  container {
+ container {
     name   = "emotiontracking-dev"
     image  = "opsia.azurecr.io/emotion-tracking:v1"
     cpu    = "0.5"
@@ -69,26 +78,27 @@ resource "azurerm_container_group" "db" {
     }
     volume {
       name       = "emotion-data"
-      mount_path = "/app"
+      mount_path = "/repo"
       git_repo {
-        url = "https://github.com/votre-utilisateur/votre-repo.git"
-        directory  = "/path/to/git/repo"
+        url = "https://github.com/totor59/Emotions_Tracking_App_NLP"
+        directory  = "/repo"
         revision   = "main" # La branche, le tag ou le commit à utiliser
       }
     }
     commands = [
       "bash",
       "-c",
-      "python manage.py makemigrations && python manage.py migrate && python ./src/postgre_patient_import.py && python ./src/elastic_mapping_import.py && python manage.py runserver 0.0.0.0:8000"
+      "cd /app && python manage.py makemigrations && python manage.py migrate && python ./src/postgre_patient_import.py && python ./src/elastic_mapping_import.py && python manage.py runserver 0.0.0.0:8000"
     ]
     environment_variables = {
       POSTGRES_DB       = "emotion_db"
       POSTGRES_USER     = "main_user"
       POSTGRES_PASSWORD = "pwd"
+      POSTGRES_NAME     = "emotion_db"
+      DB_HOST           = "db"
+      ELASTICSEARCH_HOST = "elasticsearch-dev"
+      ELASTICSEARCH_PORT = 9200
     }
   }
-
-  tags = {
-    environment = "dev"
-  }
 }
+

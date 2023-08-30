@@ -27,3 +27,54 @@ variable "location" {
   type        = string
   default     = "North Europe"
 }
+
+/////////////////////////////////////////////
+#variables.tf
+
+variable "node_count" {
+  description = "Number of nodes in the AKS cluster."
+  type        = number
+  default     = 3
+}
+
+variable "admin_username" {
+  description = "Admin username for VMs."
+  type        = string
+  default     = "adminuser"
+}
+
+variable "ssh_pub_key" {
+  description = "SSH public key for VM access."
+  type        = string
+  default     = ""
+}
+
+variable "vm_size" {
+  description = "Size of the VMs in the agent pool."
+  type        = string
+  default     = "Standard_DS2_v2"
+}
+
+variable "kubernetes_version" {
+  description = "Kubernetes version for the AKS cluster."
+  type        = string
+  default     = "1.21.7"
+}
+
+variable "author" {
+  description = "Maintainer or author of the configuration."
+  type        = string
+  default     = "Your Name"
+}
+
+variable "poc-name" {
+  description = "Name of the Proof of Concept."
+  type        = string
+  default     = "poc"
+}
+
+variable "client_secret" {
+  description = "Client secret for the Azure AD application."
+  type        = string
+  default     = "your_client_secret"
+}

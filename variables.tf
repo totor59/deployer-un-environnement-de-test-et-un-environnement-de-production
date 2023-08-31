@@ -1,80 +1,23 @@
-variable "subscription_id" {
-  description = "Azure Subscription ID"
-  type        = string
-  default     = "ec907711-acd7-4191-9983-9577afbe3ce1"
-}
-
-variable "tenant_id" {
-  description = "Azure Tenant ID"
-  type        = string
-  default     = "a2e466aa-4f86-4545-b5b8-97da7c8febf3"
-}
-
-variable "prefix" {
-  description = "Préfixe de nom pour les ressources."
-  type        = string
-  default     = "opsia"
-}
-
-variable "suffix" {
-  description = "Suffixe de nom pour les ressources."
-  type        = string
-  default     = "001"
-}
-
-variable "location" {
-  description = "Localisation des ressources."
-  type        = string
-  default     = "North Europe"
-}
-
-/////////////////////////////////////////////
 #variables.tf
 
-variable "node_count" {
-  description = "Number of nodes in the AKS cluster."
-  type        = number
-  default     = 3
-}
+subscription_id = "ec907711-acd7-4191-9983-9577afbe3ce1"
+tenant_id       = "a2e466aa-4f86-4545-b5b8-97da7c8febf3"
+client_id       = "01775374-4166-4be1-ba12-5cc3961c984b"
+client_secret   = "yzb8Q~gPKCmWPMAL.QcbDwI7kEN7tshoVqxzVc6I"
 
-variable "admin_username" {
-  description = "Admin username for VMs."
-  type        = string
-  default     = "adminuser"
-}
+resource_group_name = "opsia-rg-001"
+prefix             = "opsia"
+suffix             = "001"
+location           = "North Europe"
 
-variable "ssh_pub_key" {
-  description = "SSH public key for VM access."
-  type        = string
-  default     = ""
-}
+node_count          = 2
+admin_username      = "adminuser"
+vm_size             = "Standard_DS2_v2"
+kubernetes_version = "1.21.7"
+azurerm_kubernetes_cluster = "opsai-akc"
 
-variable "vm_size" {
-  description = "Size of the VMs in the agent pool."
-  type        = string
-  default     = "Standard_DS2_v2"
-}
-
-variable "kubernetes_version" {
-  description = "Kubernetes version for the AKS cluster."
-  type        = string
-  default     = "1.21.7"
-}
-
-variable "author" {
-  description = "Maintainer or author of the configuration."
-  type        = string
-  default     = "Your Name"
-}
-
-variable "poc-name" {
-  description = "Name of the Proof of Concept."
-  type        = string
-  default     = "poc"
-}
-
-variable "client_secret" {
-  description = "Client secret for the Azure AD application."
-  type        = string
-  default     = "your_client_secret"
-}
+db_admin_username = "gassim"
+db_admin_password = "Gassim92!@"
+db_username = "gassim"
+db_password = "Gassim92!@"
+app_image = "emotion-tracking"

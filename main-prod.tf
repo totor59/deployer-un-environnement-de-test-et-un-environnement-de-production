@@ -1,13 +1,19 @@
-#main-prod.tf
+# main.tf
 
-# Cluster Kubernetes // opsia-rg-001 
+provider "azurerm" {
+  features {}
+}
 
-# Creating AKS Cluster
-resource "azurerm_aks_cluster" "aks_cluster" {
-  name                = "opsai-001"
-  location            = "default"
-  resource_group_name = "default"
-  dns_prefix          = "myakscluster"
+resource "azurerm_resource_group" "main" {
+  name     = "emotion-tracking-rg"
+  location = "East US"
+}
+
+resource "azurerm_kubernetes_cluster" "k8s" {
+  name                = "emotion-tracking-cluster"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  dns_prefix          = "emotion-tracking"
 
   identity {
     type = "SystemAssigned"
@@ -16,35 +22,113 @@ resource "azurerm_aks_cluster" "aks_cluster" {
   default_node_pool {
     name       = "agentpool"
     vm_size    = "Standard_D2_v2"
-    node_count = var.node_count
-  }
-
-  service_principal {
-    client_id     = "01775374-4166-4be1-ba12-5cc3961c984b"
-    client_secret = "yzb8Q~gPKCmWPMAL.QcbDwI7kEN7tshoVqxzVc6I"
+    node_count = 1
   }
 }
 
-# Creating Kubernetes Secrets
-resource "kubernetes_secret" "my_secret" {
+resource "azurerm_postgresql_server" "postgres" {
+  name                = "emotion-tracking-db"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  sku_name            = "GP_Gen5_2"
+  storage_mb          = 5120
+  ssl_enforcement_enabled = true
+  administrator_login          = "your-admin-username"
+  administrator_login_password = "your-admin-password"
+  version = "11"
+}
+
+resource "kubernetes_namespace" "emotion_tracking" {
   metadata {
-    name      = "my-secret"
-    namespace = "default"  # Replace with your desired namespace
+    name = "emotion-tracking"
+  }
+}
+
+resource "kubernetes_secret" "db_secret" {
+  metadata {
+    name      = "db-secret"
+    namespace = kubernetes_namespace.emotion_tracking.metadata[0].name
   }
 
   data = {
-    "username" = "my-username"
-    "password" = "my-password"
+    "username" = "your-db-username"
+    "password" = "your-db-password"
   }
 
   type = "Opaque"
 }
 
-# Creating Kubernetes Deployment
-resource "kubernetes_deployment" "example" {
+resource "kubernetes_deployment" "postgres_deployment" {
   metadata {
-    name      = "my-deployment"
-    namespace = "default"
+    name      = "postgres-deployment"
+    namespace = kubernetes_namespace.emotion_tracking.metadata[0].name
+  }
+
+  spec {
+    replicas = 1
+
+    selector {
+      match_labels = {
+        app = "postgres"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          app = "postgres"
+        }
+      }
+
+      spec {
+        container {
+          name  = "postgres-container"
+          image = "postgres:11"
+
+          env {
+            name  = "POSTGRES_USER"
+            value = "your-db-username"
+          }
+          env {
+            name  = "POSTGRES_PASSWORD"
+            value = "your-db-password"
+          }
+          env {
+            name  = "POSTGRES_DB"
+            value = "emotiondb"
+          }
+
+          port {
+            container_port = 5432
+          }
+        }
+      }
+    }
+  }
+}
+
+resource "kubernetes_service" "postgres_service" {
+  metadata {
+    name      = "postgres-service"
+    namespace = kubernetes_namespace.emotion_tracking.metadata[0].name
+  }
+
+  spec {
+    selector = {
+      app = "postgres"
+    }
+
+    port {
+      port        = 5432
+      target_port = 5432
+    }
+  }
+}
+
+resource "kubernetes_deployment" "app_deployment" {
+  metadata {
+    name      = "app-deployment"
+    namespace = kubernetes_namespace.emotion_tracking.metadata[0].name
   }
 
   spec {
@@ -52,30 +136,29 @@ resource "kubernetes_deployment" "example" {
 
     selector {
       match_labels = {
-        app = "my-app"
+        app = "app"
       }
     }
 
     template {
       metadata {
         labels = {
-          app = "my-app"
+          app = "app"
         }
       }
 
       spec {
         container {
-          name  = "my-container"
-          image = "my-image:latest"
-          
-          # Additional container configuration
-          ports {
-            container_port = 80
-          }
-          
+          name  = "app-container"
+          image = "your-app-image"
+
           env {
-            name  = "MY_ENV_VAR"
-            value = "my-value"
+            name  = "DB_HOST"
+            value = "postgres-service"
+          }
+
+          port {
+            container_port = 80
           }
         }
       }
@@ -83,42 +166,38 @@ resource "kubernetes_deployment" "example" {
   }
 }
 
-# Creating Services
-resource "kubernetes_service" "web_service" {
+resource "kubernetes_service" "app_service" {
   metadata {
-    name = "web-service"
+    name      = "app-service"
+    namespace = kubernetes_namespace.emotion_tracking.metadata[0].name
   }
 
   spec {
     selector = {
-      app = "web-app"
+      app = "app"
     }
 
     port {
       port        = 80
-      target_port = 8080
+      target_port = 80
     }
+
+    type = "NodePort"
   }
 }
 
-# Creating container registory 
-resource "azurerm_container_registry" "my_registry" {
-  name                = "myregistry"
-  location            = azurerm_resource_group.my_rg.location
-  resource_group_name = azurerm_resource_group.my_rg.name
-  sku                 = "Standard"
-
-  admin_enabled = false
-  tags = {
-    environment = "prod"
-  }
-}
-
-# Creating Log Analytics Workspace
 resource "azurerm_log_analytics_workspace" "log_workspace" {
-  location            = var.location
-  name                = "${var.prefix}-${var.suffix}-logs"  # Replace with your desired name
-  resource_group_name = data.azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  name                = "emotion-tracking-logs"
+  resource_group_name = azurerm_resource_group.main.name
   sku                 = "PerGB2018"
-  retention_in_days   = 30  
+  retention_in_days   = 30
+}
+
+output "cluster_name" {
+  value = azurerm_kubernetes_cluster.k8s.name
+}
+
+output "cluster_rg" {
+  value = azurerm_kubernetes_cluster.k8s.resource_group_name
 }

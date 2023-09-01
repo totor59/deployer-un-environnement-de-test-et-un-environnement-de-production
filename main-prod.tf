@@ -41,12 +41,13 @@ resource "azurerm_postgresql_server" "postgres" {
 }
 
 resource "azurerm_container_registry" "my_registry" {
-  name                = "myaksregistry${random_integer}"
+  name                = "myaksregistry"
   resource_group_name = var.resource_group_name 
   location            = var.location
   admin_enabled       = true
   sku                 = "Basic"
 }
+
 
 resource "kubernetes_namespace" "emotion_tracking" {
   metadata {

@@ -1,8 +1,10 @@
 # main.tf
-
 provider "azurerm" {
   features {}
+  subscription_id = var.subscription_id
+  tenant_id       = var.tenant_id
 }
+
 
 resource "azurerm_resource_group" "main" {
   name     = "emotion-tracking-rg"
@@ -12,9 +14,8 @@ resource "azurerm_resource_group" "main" {
 resource "azurerm_kubernetes_cluster" "k8s" {
   name                = "emotion-tracking-cluster"
   location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
   dns_prefix          = "emotion-tracking"
-
+  resource_group_name = var.resource_group_name
   identity {
     type = "SystemAssigned"
   }
@@ -36,6 +37,14 @@ resource "azurerm_postgresql_server" "postgres" {
   administrator_login          = "your-admin-username"
   administrator_login_password = "your-admin-password"
   version = "11"
+}
+
+resource "azurerm_container_registry" "my_registry" {
+  name                = "myregistryname"
+  resource_group_name = var.resource_group_name 
+  location            = var.location
+  admin_enabled       = true
+  sku                 = "Basic"
 }
 
 resource "kubernetes_namespace" "emotion_tracking" {
@@ -200,4 +209,39 @@ output "cluster_name" {
 
 output "cluster_rg" {
   value = azurerm_kubernetes_cluster.k8s.resource_group_name
+}
+
+# Création de l'équilibreur de charge
+resource "azurerm_lb" "nginx_lb" {
+  name                = "nginx-lb"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+
+  frontend_ip_configuration {
+    name                 = "public"
+    public_ip_address_id = azurerm_public_ip.nginx_public_ip.id
+  }
+}
+
+resource "azurerm_public_ip" "nginx_public_ip" {
+  name                = "nginx-public-ip"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  allocation_method   = "Dynamic"
+}
+
+resource "azurerm_lb_backend_address_pool" "nginx_backend_pool" {
+  name                = "nginx-backend-pool"
+  loadbalancer_id     = azurerm_lb.nginx_lb.id
+}
+
+resource "azurerm_lb_rule" "nginx_lb_rule" {
+  name                = "nginx-lb-rule"
+  loadbalancer_id     = azurerm_lb.nginx_lb.id
+  backend_address_pool_ids      = [azurerm_lb_backend_address_pool.nginx_backend_pool.id]
+  frontend_ip_configuration_name = "public" 
+
+  protocol = "Tcp"
+  frontend_port = 443
+  backend_port  = 443
 }

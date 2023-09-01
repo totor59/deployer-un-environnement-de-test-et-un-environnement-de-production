@@ -41,7 +41,7 @@ resource "azurerm_postgresql_server" "postgres" {
 }
 
 resource "azurerm_container_registry" "my_registry" {
-  name                = "myaksregistry"
+  name                = "opsaiaregistry"
   resource_group_name = var.resource_group_name 
   location            = var.location
   admin_enabled       = true

@@ -42,3 +42,8 @@ output "client_secret" {
   value       = var.client_secret
   sensitive   = true
 }
+
+# Output pour l'adresse IP publique du Load Balancer
+output "nginx_lb_public_ip" {
+  value = azurerm_public_ip.nginx_public_ip.ip_address
+}

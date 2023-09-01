@@ -35,13 +35,13 @@ resource "azurerm_postgresql_server" "postgres" {
   sku_name            = "GP_Gen5_2"
   storage_mb          = 5120
   ssl_enforcement_enabled = true
-  administrator_login          = "your-admin-username"
-  administrator_login_password = "your-admin-password"
+  administrator_login          = "gassim92"
+  administrator_login_password = "Gassim0908!@#"
   version = "11"
 }
 
 resource "azurerm_container_registry" "my_registry" {
-  name                = "myregistryname"
+  name                = ""myaksregistry${random_integer}""
   resource_group_name = var.resource_group_name 
   location            = var.location
   admin_enabled       = true

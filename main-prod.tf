@@ -41,7 +41,7 @@ resource "azurerm_postgresql_server" "postgres" {
 }
 
 resource "azurerm_container_registry" "my_registry" {
-  name                = ""myaksregistry${random_integer}""
+  name                = "myaksregistry${random_integer}"
   resource_group_name = var.resource_group_name 
   location            = var.location
   admin_enabled       = true
@@ -67,6 +67,7 @@ resource "kubernetes_secret" "db_secret" {
 
   type = "Opaque"
 }
+
 
 resource "kubernetes_deployment" "postgres_deployment" {
   metadata {
